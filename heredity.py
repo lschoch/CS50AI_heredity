@@ -142,24 +142,35 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     
     def prob_of_passing(name):
         """
-        Returns the probability of passing a gene given the name of a parent.
+        Returns the probability that the named parent will pass an abnormal gene depending
+        on the number of copies of abnormal gene they have (0, 1, or 2).
         """
-        if name in zero_genes: 
+        if name in zero_genes: # Name has no abnormal genes.
             return PROBS['mutation']
-        elif name in one_gene:
+        elif name in one_gene: # Name has one abnormal gene.
             return (1 - PROBS['mutation'])/2
-        else:
+        else: # Name has two abnormal genes.
             return 1 - PROBS['mutation']
     
     def get_p(name, mother, father, genes):
+        """Calculates the probability that a person will receive 0, 1, or 2 of the
+        abnormal genes from their parents. 
+        
+        Keyword arguments:
+        name -- name of the person.
+        mother -- name of the person's mother.
+        father -- name of the person's father.
+        genes -- number of genes received by the person.
+        Return: probability that 'name' receives 'genes' number of the abnormal gene.
+        """
         # Check for parents (if persons have one parent, then they have both parents.)
         if mother:
-            mpp = prob_of_passing(mother)
-            fpp = prob_of_passing(father)
+            mpp = prob_of_passing(mother) # mpp - mother's probability of passing.
+            fpp = prob_of_passing(father) # fpp - father's probability of passing.
             p = mpp * (1 - fpp) + fpp * (1 - mpp)
         else: # No parents provided in the data file. Use the unconditional probability.
             p = PROBS['gene'][genes]
-        # Check if have_trait is one of the events to be included.
+        # Include have_trait status in the calculation of p.
         if name in have_trait:
             p *= PROBS['trait'][genes][True]
         else:
@@ -169,6 +180,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     p_0, p_1, p_2 = 0, 0, 0 # Probabilities of 0, 1, and 2 genes respectively.
     # Get set of people with zero genes.
     zero_genes = set(list(p for p in people if p not in one_gene and p not in two_genes))
+    # Get the probabilities for receiving 0, 1, and 2 abnormal genes.
     for person in people:
         if people[person]['name'] in zero_genes:
             p_0 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 0)
@@ -189,7 +201,7 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
+
 
 
 def normalize(probabilities):
