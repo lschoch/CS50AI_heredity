@@ -139,7 +139,47 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
+    
+    def prob_of_passing(name):
+        """
+        Returns the probability of passing a gene given the name of a parent.
+        """
+        if name in zero_genes: 
+            return PROBS['mutation']
+        elif name in one_gene:
+            return (1 - PROBS['mutation'])/2
+        else:
+            return 1 - PROBS['mutation']
+    
+    def get_p(name, mother, father, genes):
+        # Check for parents (if persons have one parent, then they have both parents.)
+        if mother:
+            mpp = prob_of_passing(mother)
+            fpp = prob_of_passing(father)
+            p = mpp * (1 - fpp) + fpp * (1 - mpp)
+        else: # No parents provided in the data file. Use the unconditional probability.
+            p = PROBS['gene'][genes]
+        # Check if have_trait is one of the events to be included.
+        if name in have_trait:
+            p *= PROBS['trait'][genes][True]
+        else:
+            p *= PROBS['trait'][genes][False]
+        return p
+        
+    p_0, p_1, p_2 = 0, 0, 0 # Probabilities of 0, 1, and 2 genes respectively.
+    # Get set of people with zero genes.
+    zero_genes = set(list(p for p in people if p not in one_gene and p not in two_genes))
+    for person in people:
+        if people[person]['name'] in zero_genes:
+            p_0 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 0)
+
+        if people[person]['name'] in one_gene:
+            p_1 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 1)
+
+        if people[person]['name'] in two_genes:
+            p_2 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 2)
+
+    return p_0 * p_1 * p_2
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
