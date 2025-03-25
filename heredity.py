@@ -138,19 +138,19 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    
+
     def prob_of_passing(parent):
         """
         Returns the probability that the parent will pass an abnormal gene depending
         on the number of copies of abnormal gene they have (0, 1, or 2).
         """
-        if parent in one_gene: # Name has one abnormal gene.
+        if parent in one_gene:  # Name has one abnormal gene.
             return (1 - PROBS['mutation'])/2
-        if parent in two_genes: # Name has two abnormal genes.
+        if parent in two_genes:  # Name has two abnormal genes.
             return 1 - PROBS['mutation']
         return PROBS['mutation']
-        
-    p_0, p_1, p_2 = 1, 1, 1 # Probabilities of 0, 1, and 2 genes respectively.
+
+    p_0, p_1, p_2 = 1, 1, 1  # Probabilities of 0, 1, and 2 genes respectively.
     # Get set of people with zero genes = all the people not in one_gene or two_genes.
     zero_genes = set(list(p for p in people if p not in one_gene and p not in two_genes))
 
@@ -165,9 +165,10 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         if people[person]['name'] in zero_genes:
             # Check for parents. If mother is specified then father is also specified.
             if people[person]['mother']:
-                # p_0_temp is product of probability that mother will not pass the gene times the probability that the father 
+                # p_0_temp is product of probability that mother will not pass the gene times the probability that the father
                 # will not pass the gene.
-                p_0_temp = (1 - prob_of_passing(people[person]['father'])) * (1 - prob_of_passing(people[person]['mother']))
+                p_0_temp = (1 - prob_of_passing(people[person]['father'])) * \
+                    (1 - prob_of_passing(people[person]['mother']))
             else:
                 # If no parents, use unconditional probabilities.
                 p_0_temp = PROBS['gene'][0]
@@ -181,10 +182,12 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         # Repeat the above process for persons with one gene and persons with two genes.
         if people[person]['name'] in one_gene:
             if people[person]['mother']:
-                # Probability of one gene = prob that mother will pass one gene and father not pass a gene times the 
+                # Probability of one gene = prob that mother will pass one gene and father not pass a gene times the
                 # prob that father will pass one gene nd mother not pass a gene.
-                p_1_temp = prob_of_passing(people[person]['mother']) * (1 - prob_of_passing(people[person]['father']))
-                p_1_temp += prob_of_passing(people[person]['father']) * (1 - prob_of_passing(people[person]['mother']))
+                p_1_temp = prob_of_passing(people[person]['mother']) * \
+                    (1 - prob_of_passing(people[person]['father']))
+                p_1_temp += prob_of_passing(people[person]['father']) * \
+                    (1 - prob_of_passing(people[person]['mother']))
             else:
                 p_1_temp = PROBS['gene'][1]
             if people[person]['name'] in have_trait:
@@ -198,7 +201,8 @@ def joint_probability(people, one_gene, two_genes, have_trait):
             if people[person]['mother']:
                 # Probability of two genes = prob that mother will pass one gened time the prob that father will
                 # pass one gene.
-                p_2_temp = prob_of_passing(people[person]['mother']) * prob_of_passing(people[person]['father'])
+                p_2_temp = prob_of_passing(people[person]['mother']) * \
+                    prob_of_passing(people[person]['father'])
             else:
                 p_2_temp = PROBS['gene'][2]
             if people[person]['name'] in have_trait:
@@ -242,7 +246,7 @@ def normalize(probabilities):
         probabilities[person]['gene'][0] *= alpha
         probabilities[person]['gene'][1] *= alpha
         probabilities[person]['gene'][2] *= alpha
-        
+
         trait_values = list(probabilities[person]['trait'].values())
         alpha = 1/sum(list(trait_values))
         probabilities[person]['trait'][True] *= alpha
