@@ -144,29 +144,33 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         Returns the probability that the parent will pass an abnormal gene depending
         on the number of copies of abnormal gene they have (0, 1, or 2).
         """
-        if parent in one_gene:  # Name has one abnormal gene.
-            return (1 - PROBS['mutation'])/2
-        if parent in two_genes:  # Name has two abnormal genes.
+        if parent in one_gene:  # Name has one abnormal gene. 50% chance of passing an
+            # abnormal gene and 50% chance of passing a normal gene - the mutation of 
+            # the abnormal gene to normal is offset by the mutation of the normal gene
+            # to abnormal.
+            return 1/2 
+
+        if parent in two_genes:  # Name has two abnormal genes. 100% chance of passing an
+            # abnormal gene but PROBS['mutation'] chance it will mutate to normal.
             return 1 - PROBS['mutation']
-        return PROBS['mutation']
+        # Not one or two means no abnormal genes. 0% chance of passing an abnormal gene
+        # but PROBS['mutation'] chance the normal gene will mutate to abnormal.
+        return PROBS['mutation'] 
+    
 
     p_0, p_1, p_2 = 1, 1, 1  # Probabilities of 0, 1, and 2 genes respectively.
     # Get set of people with zero genes = all the people not in one_gene or two_genes.
     zero_genes = set(list(p for p in people if p not in one_gene and p not in two_genes))
 
-    # Track the number of children.
-    child_count = 0
     # Get the probabilities for receiving 0, 1, and 2 abnormal genes.
     for person in people:
         # If there is a mother, this person is a child.
-        if people[person]['mother']:
-            child_count += 1
-        # Calculate the probabilities depending on how many abnormal genes the person has (0, 1, or 2).
+        # Calculate the probabilities depending on how many abnormal genes the person has.
         if people[person]['name'] in zero_genes:
             # Check for parents. If mother is specified then father is also specified.
             if people[person]['mother']:
-                # p_0_temp is product of probability that mother will not pass the gene times the probability that the father
-                # will not pass the gene.
+                # p_0_temp is product of probability that mother will not pass the gene 
+                # times the probability that the father will not pass the gene.
                 p_0_temp = (1 - prob_of_passing(people[person]['father'])) * \
                     (1 - prob_of_passing(people[person]['mother']))
             else:
@@ -182,8 +186,9 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         # Repeat the above process for persons with one gene and persons with two genes.
         if people[person]['name'] in one_gene:
             if people[person]['mother']:
-                # Probability of one gene = prob that mother will pass one gene and father not pass a gene times the
-                # prob that father will pass one gene nd mother not pass a gene.
+                # Probability of one gene = prob that mother will pass one abnormalgene 
+                # and father will not pass an abnormal gene times the prob that father 
+                # will pass one abnormal gene and mother not pass an abnormal gene.
                 p_1_temp = prob_of_passing(people[person]['mother']) * \
                     (1 - prob_of_passing(people[person]['father']))
                 p_1_temp += prob_of_passing(people[person]['father']) * \
@@ -194,13 +199,11 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                 p_1_temp *= PROBS['trait'][1][True]
             else:
                 p_1_temp *= PROBS['trait'][1][False]
-            # Probablity of mutations increases with each successive child.
-            p_1_temp *= (1 - PROBS['mutation'])**child_count
             p_1 *= p_1_temp
         if people[person]['name'] in two_genes:
             if people[person]['mother']:
-                # Probability of two genes = prob that mother will pass one gened time the prob that father will
-                # pass one gene.
+                # Probability of two genes = prob that mother will pass one abnormal gene times 
+                # the prob that father will pass one abnormal gene.
                 p_2_temp = prob_of_passing(people[person]['mother']) * \
                     prob_of_passing(people[person]['father'])
             else:
@@ -209,7 +212,6 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                 p_2_temp *= PROBS['trait'][2][True]
             else:
                 p_2_temp *= PROBS['trait'][2][False]
-            p_2_temp *= (1 - PROBS['mutation'])**child_count
             p_2 *= p_2_temp
 
     return p_0 * p_1 * p_2
