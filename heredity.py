@@ -1,6 +1,7 @@
 import csv
 import itertools
 import sys
+# from icecream import ic
 
 PROBS = {
 
@@ -84,13 +85,13 @@ def main():
     normalize(probabilities)
 
     # Print results
-    for person in people:
+    """ for person in people:
         print(f"{person}:")
         for field in probabilities[person]:
             print(f"  {field.capitalize()}:")
             for value in probabilities[person][field]:
                 p = probabilities[person][field][value]
-                print(f"    {value}: {p:.4f}")
+                print(f"    {value}: {p:.4f}") """
 
 
 def load_data(filename):
@@ -149,31 +150,6 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         if parent in two_genes: # Name has two abnormal genes.
             return 1 - PROBS['mutation']
         return PROBS['mutation']
-    
-    def get_p(name, mother, father, genes):
-        """Calculates the probability that a person will receive 0, 1, or 2 of the
-        abnormal genes from their parents. 
-        
-        Keyword arguments:
-        name -- name of the person.
-        mother -- name of the person's mother.
-        father -- name of the person's father.
-        genes -- number of genes received by the person.
-        Return: probability that 'name' receives 'genes' number of the abnormal gene.
-        """
-        # Check for parents (if persons have one parent, then they have both parents.)
-        if mother:
-            mpp = prob_of_passing(mother) # mpp - mother's probability of passing.
-            fpp = prob_of_passing(father) # fpp - father's probability of passing.
-            p = mpp * (1 - fpp) + fpp * (1 - mpp)
-        else: # Use the unconditional probability if parents unknown.
-            p = PROBS['gene'][genes]
-        # Include have_trait status in the calculation of p.
-        if have_trait and name in have_trait:
-            p *= PROBS['trait'][genes][True]
-        else:
-            p *= PROBS['trait'][genes][False]
-        return p
         
     p_0, p_1, p_2 = 1, 1, 1 # Probabilities of 0, 1, and 2 genes respectively.
     # Get set of people with zero genes - all the people not in one_gene or two_genes.
@@ -182,16 +158,54 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     # Get the probabilities for receiving 0, 1, and 2 abnormal genes.
     for person in people:
         if people[person]['name'] in zero_genes:
-            p_0 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 0)
-
+            condition = people[person]['name'] in ['Arthur', 'Charlie', 'Fred', 'Ginny', 'Molly', 'Ron'] and one_gene == set() and two_genes == set() and have_trait == set()
+            if people[person]['mother']:
+                """ if condition:
+                    ic(people[person]['name'], 'has parents') """
+                #p_0_temp = (1 - PROBS['mutation']) * (1 - prob_of_passing(people[person]['mother']))/2
+                #p_0_temp += (1 - PROBS['mutation']) * (1 - prob_of_passing(people[person]['father']))/2
+                p_0_temp = (1 - prob_of_passing(people[person]['father'])) * (1 - prob_of_passing(people[person]['mother']))/2
+                p_0_temp += (1 - prob_of_passing(people[person]['mother'])) * (1 - prob_of_passing(people[person]['father']))/2
+            else:
+                p_0_temp = PROBS['gene'][0]
+            """ if condition:
+                ic(people[person]['name'], p_0_temp) """
+            if people[person]['name'] in have_trait:
+                p_0_temp *= PROBS['trait'][0][True]
+            else:
+                p_0_temp *= PROBS['trait'][0][False]
+            """ if condition:
+                ic(people[person]['name'], p_0_temp) """
+            p_0 *= p_0_temp
+            """ if condition:
+                ic(people[person]['name'], p_0) """
         if people[person]['name'] in one_gene:
-            p_1 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 1)
+            if people[person]['mother']:
+                p_1_temp = prob_of_passing(people[person]['mother']) * (1 - prob_of_passing(people[person]['father']))
+                p_1_temp += prob_of_passing(people[person]['father']) * (1 - prob_of_passing(people[person]['mother']))
+            else:
+                p_1_temp = PROBS['gene'][1]
+            if people[person]['name'] in have_trait:
+                p_1_temp *= PROBS['trait'][1][True]
+            else:
+                p_1_temp *= PROBS['trait'][1][False]
+            p_1 *= p_1_temp
 
         if people[person]['name'] in two_genes:
-            p_2 = get_p(people[person]['name'], people[person]['mother'], people[person]['father'], 2)
+            if people[person]['mother']:
+                p_2_temp = ((prob_of_passing(people[person]['mother']))/2 * prob_of_passing(people[person]['father'])/2)
+            else:
+                p_2_temp = PROBS['gene'][2]
+            if people[person]['name'] in have_trait:
+                p_2_temp *= PROBS['trait'][2][True]
+            else:
+                p_2_temp *= PROBS['trait'][2][False]
+            p_2 *= p_2_temp
 
     joint_prob = p_0 * p_1 * p_2
-
+    condition = people[person]['name'] in ['Arthur', 'Charlie', 'Fred', 'Ginny', 'Molly', 'Ron'] and one_gene == set() and two_genes == set() and have_trait == set()
+    """ if condition:
+        ic(joint_prob, p_0, p_1, p_2) """
     return joint_prob
 
 
@@ -235,10 +249,3 @@ def normalize(probabilities):
 
 if __name__ == "__main__":
     main()
-
-
-    """
-    What to do if trait is not specified (have_trait includes empty set).
-    What to do if all have zero genes (i.e., one_gene is empty and two_gens is empty.)
-
-    """
